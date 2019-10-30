@@ -30,8 +30,16 @@ router.get('/:id/posts', (req, res) => {
 
 });
 
-router.delete('/:id', (req, res) => {
-
+router.delete('/:id', validateUserId, (req, res) => {
+    const { id } = req.params;
+    user.remove(id)
+        .then(() => {
+            res.status(200).json({ message: `post with id ${id} deleted`});
+        })
+        .catch(err => {
+            console.log(err);
+            res.status(404).json({error: `The post with id of ${id} does not exist.`})
+        })
 });
 
 router.put('/:id', validateUserId, (req, res) => {
@@ -50,7 +58,7 @@ router.put('/:id', validateUserId, (req, res) => {
         })
         .catch(err => {
             console.log(err);
-            res.status(500).json({error: 'Error updating user'});
+            res.status(500).json({error: 'Error updating user'}); 
         })
 });
 
