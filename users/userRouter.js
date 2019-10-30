@@ -22,16 +22,8 @@ router.get('/', (req, res) => {
         })
 });
 
-router.get('/:id', (req, res) => {
-    const { id } = req.params;
-    user.getById(id)
-        .then(user => {
-            if(user) {
-                res.status(200).json(user);
-            } else {
-                res.status(404).json({ error: `This post id:${id} does not exist`});
-            }
-        })
+router.get('/:id', validateUserId, (req, res) => {
+    res.status(200).json(req.user);
 });
 
 router.get('/:id/posts', (req, res) => {
@@ -42,14 +34,39 @@ router.delete('/:id', (req, res) => {
 
 });
 
-router.put('/:id', (req, res) => {
-
+router.put('/:id', validateUserId, (req, res) => {
+    const { id } = req.params;
+    const { name } = req.body;
+    user.update(id, { name })
+        .then(updated => {
+            if (updated) {
+                user.getById(id)
+                    .then(user => res.status(200).json(user))
+                    .catch(err => {
+                        console.log(err);
+                        res.status(500).json({error: `Error getting user id ${id}`});
+                    })
+            }
+        })
+        .catch(err => {
+            console.log(err);
+            res.status(500).json({error: 'Error updating user'});
+        })
 });
 
 //custom middleware
 
 function validateUserId(req, res, next) {
-
+    const { id } = req.params;
+    user.getById(id)
+        .then(user => {
+            if (user) {
+                req.user = user;
+                next();
+            } else {
+                res.status(404).json({error: `Invalid user id of ${id}`});
+            }
+        })
 };
 
 function validateUser(req, res, next) {
